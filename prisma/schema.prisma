@@ -1,0 +1,353 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MODEL - Handles authentication, preferences, and user data
+// ============================================================================
+model User {
+  // Primary identification and authentication fields
+  id              String            @id @default(cuid())  // Unique user ID
+  email           String            @unique              // Email for login
+  username        String            @unique              // Display name
+  password        String                                 // Hashed password
+  
+  // User profile information
+  firstName       String?
+  lastName        String?
+  avatar          String?                                // URL to profile picture
+  
+  // Subscription and verification status
+  isPremium       Boolean           @default(false)      // Premium subscription status
+  premiumUntil    DateTime?                              // When premium expires
+  emailVerified   Boolean           @default(false)      // Email verification flag
+  
+  // Timestamps for auditing
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?                              // Soft delete timestamp
+
+  // Relations to other models
+  wishlist        WishlistItem[]
+  favorites       FavoriteGame[]
+  alerts          SaleAlert[]
+  notifications   Notification[]
+  reviews         GameReview[]
+  searchHistory   SearchHistory[]
+
+  // Database indexes for common queries
+  @@index([email])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// GAME MODEL - Stores Xbox game information and current pricing
+// ============================================================================
+model Game {
+  // Basic game identification
+  id                  String            @id @default(cuid())      // Internal ID
+  xboxId              String            @unique                   // Xbox Store ID
+  title               String                                      // Game title
+  description         String?           @db.Text                 // Full description
+  
+  // Game metadata
+  genre               String[]          @default([])             // Array of genres
+  publisher           String                                      // Publisher name
+  developer           String?                                     // Developer name
+  releaseDate         DateTime?                                   // Original release date
+  esrbRating          String?                                     // E, E10+, T, M, AO
+  playCount           Int?                                        // Estimated player count
+  averageRating       Float?                                      // Community rating 0-100
+  tags                String[]          @default([])             // Game tags/features
+  
+  // Visual assets
+  coverArt            String?                                     // Game box art URL
+  bannerArt           String?                                     // Banner image URL
+  screenshots         String[]          @default([])             // Array of screenshot URLs
+  
+  // Pricing information
+  currentPrice        Float                                       // Current Xbox price
+  basePrice           Float                                       // Original/base price
+  isOnSale            Boolean           @default(false)          // Currently discounted?
+  currentDiscount     Float?                                      // Current discount %
+  xboxStoreUrl        String                                      // Link to Xbox Store
+  
+  // Game Pass information
+  isGamePass          Boolean           @default(false)          // Available on Game Pass?
+  gamePassUntil       DateTime?                                   // When it leaves Game Pass
+  
+  // Data management
+  lastPriceCheck      DateTime          @default(now())          // Last price update
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  deletedAt           DateTime?         // Soft delete
+
+  // Relations to track historical and user data
+  priceHistory        PriceHistory[]
+  saleHistory         SaleHistory[]
+  prediction          SalePrediction?
+  reviews             GameReview[]
+  wishlistedBy        WishlistItem[]
+  favoritedBy         FavoriteGame[]
+  searches            SearchHistory[]
+
+  // Indexes for fast queries
+  @@index([title])
+  @@index([publisher])
+  @@index([genre])
+  @@index([currentPrice])
+  @@index([isOnSale])
+  @@index([lastPriceCheck])
+}
+
+// ============================================================================
+// PRICE HISTORY MODEL - Tracks every price change over time
+// ============================================================================
+model PriceHistory {
+  // Identification
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Price data at time of recording
+  price     Float                                        // Price at this time
+  discount  Float?                                       // Discount percentage (0-100)
+  isOnSale  Boolean  @default(false)                    // Was game on sale?
+  source    String   @default("xbox")                  // Where data came from
+  
+  // Timestamps
+  recordedAt DateTime @default(now())                  // When price was recorded
+  createdAt DateTime @default(now())
+
+  // Indexes for common queries (used by prediction engine)
+  @@index([gameId])
+  @@index([recordedAt])
+  @@index([isOnSale])
+}
+
+// ============================================================================
+// SALE HISTORY MODEL - Captures sale event information for analysis
+// ============================================================================
+model SaleHistory {
+  // Identification
+  id              String    @id @default(cuid())
+  gameId          String
+  game            Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Sale event details
+  saleStartDate   DateTime                             // When sale began
+  saleEndDate     DateTime?                            // When sale ends (null if ongoing)
+  originalPrice   Float                                // Full price
+  salePrice       Float                                // Discounted price
+  discountPercent Float                                // Discount percentage
+  source          String    @default("xbox")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+
+  // Indexes for prediction algorithm (analyzes sale patterns)
+  @@index([gameId])
+  @@index([saleStartDate])
+  @@index([discountPercent])
+}
+
+// ============================================================================
+// SALE PREDICTION MODEL - Stores ML-generated predictions
+// ============================================================================
+model SalePrediction {
+  // Identification - one prediction per game
+  id                    String    @id @default(cuid())
+  gameId                String    @unique             // One prediction per game
+  game                  Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Prediction data
+  nextPredictedSaleDate DateTime?                     // When we think next sale is
+  predictionConfidence  Float                         // Confidence score 0-100
+  estimatedDiscount     Float?                        // Predicted discount %
+  estimatedSalePrice    Float?                        // Predicted sale price
+  daysUntilSale         Int?                          // Days until predicted sale
+  predictionReason      String?                       // Why we made this prediction
+  
+  // Model tracking
+  modelVersion          String    @default("v1")      // Which algorithm version
+  
+  // Timestamps
+  lastUpdated           DateTime  @default(now())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Indexes for sorting and filtering
+  @@index([gameId])
+  @@index([nextPredictedSaleDate])
+  @@index([predictionConfidence])
+}
+
+// ============================================================================
+// WISHLIST MODEL - User's saved games for tracking
+// ============================================================================
+model WishlistItem {
+  // Identification
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  addedAt   DateTime @default(now())
+
+  // Ensure user can't add same game twice
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+}
+
+// ============================================================================
+// FAVORITE GAME MODEL - Quick access to user's favorite games
+// ============================================================================
+model FavoriteGame {
+  // Identification
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  addedAt   DateTime @default(now())
+
+  // Prevent duplicates
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+}
+
+// ============================================================================
+// SALE ALERT MODEL - User notification preferences for specific games
+// ============================================================================
+model SaleAlert {
+  // Identification
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId          String
+  
+  // Alert conditions (notify when either is met)
+  targetPrice     Float?                              // Alert when price drops below
+  targetDiscount  Float?                              // Alert when discount reaches
+  
+  // Notification preferences
+  emailNotify     Boolean  @default(true)            // Send email?
+  pushNotify      Boolean  @default(true)            // Send push notification?
+  isActive        Boolean  @default(true)            // Alert enabled?
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Prevent duplicate alerts for same game
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+  @@index([isActive])
+}
+
+// ============================================================================
+// NOTIFICATION MODEL - User notification history
+// ============================================================================
+model Notification {
+  // Identification
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification content
+  type      String                                    // 'sale', 'alert', 'new_game'
+  title     String                                    // Notification title
+  message   String                                    // Notification message
+  relatedId String?                                   // Related game or alert ID
+  
+  // Read status
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+
+  // Indexes for user's notification feed
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// GAME REVIEW MODEL - User reviews and ratings
+// ============================================================================
+model GameReview {
+  // Identification
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Review content
+  rating    Int                                       // 1-5 stars
+  title     String                                    // Review title
+  content   String   @db.Text                        // Full review text
+  helpful   Int      @default(0)                      // Helpful count
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Prevent duplicate reviews
+  @@unique([gameId, userId])
+  @@index([gameId])
+  @@index([userId])
+  @@index([rating])
+}
+
+// ============================================================================
+// SEARCH HISTORY MODEL - Track user searches for analytics
+// ============================================================================
+model SearchHistory {
+  // Identification
+  id        String   @id @default(cuid())
+  userId    String?                                   // Optional for anonymous users
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  // Search information
+  query     String                                    // What user searched for
+  gameId    String?                                   // If they clicked a game
+  game      Game?    @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  
+  // Timestamps
+  timestamp DateTime @default(now())
+
+  // Indexes for analytics
+  @@index([userId])
+  @@index([timestamp])
+  @@index([query])
+}
+
+// ============================================================================
+// CACHE ENTRY MODEL - In-database caching for API responses
+// ============================================================================
+model CacheEntry {
+  // Identification
+  id        String   @id @default(cuid())
+  key       String   @unique                         // Cache key
+  value     String   @db.Text                        // Cached value (JSON)
+  expiresAt DateTime                                 // When cache expires
+  createdAt DateTime @default(now())
+
+  // Cleanup old cache entries efficiently
+  @@index([expiresAt])
+}
