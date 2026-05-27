@@ -1,0 +1,45 @@
+{
+  "name": "xbox-game-sale-predictor",
+  "version": "1.0.0",
+  "description": "A modern web application that predicts Xbox game sales",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "node prisma/seed.js",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@prisma/client": "^5.0.0",
+    "typescript": "^5.2.0",
+    "tailwindcss": "^3.3.0",
+    "recharts": "^2.10.0",
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.1.0",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.1",
+    "framer-motion": "^10.16.4",
+    "react-hot-toast": "^2.4.1",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.5",
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@types/bcryptjs": "^2.4.2",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.28",
+    "eslint": "^8.46.0",
+    "eslint-config-next": "^14.0.0",
+    "prisma": "^5.0.0"
+  }
+}
