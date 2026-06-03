@@ -231,7 +231,9 @@ Visit `http://localhost:3000` to see the application.
 
 ## 🌐 Live Demo
 
-**[Play Here](https://xbox-game-sale-predictor.vercel.app)** *(Coming Soon - Add your Vercel URL here after deployment)*
+🚀 **Deployment**: Coming Soon! Follow the steps below to deploy your own instance.
+
+*(After you deploy, your live URL will be something like `https://your-project-name.vercel.app`)*
 
 ## 🚀 Vercel Deployment Setup
 
