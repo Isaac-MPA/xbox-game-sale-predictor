@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xbox Game Sale Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #107c10;
+            --secondary: #005a9e;
+            --accent: #ffb900;
+            --dark: #1e1e1e;
+            --light: #f3f3f3;
+            --border: #e5e5e5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .tagline {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        /* Search Section */
+        .search-section {
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1em;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 124, 16, 0.1);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background-color: var(--light);
+        }
+
+        /* Sections */
+        .games-section,
+        .predictions-section {
+            margin: 60px 0;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        /* Games Grid */
+        .games-grid,
+        .predictions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .game-card-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+        }
+
+        .game-card-content {
+            padding: 20px;
+        }
+
+        .game-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .game-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .game-price {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .game-discount {
+            display: inline-block;
+            background-color: var(--accent);
+            color: var(--dark);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .game-discount.no-sale {
+            background-color: var(--border);
+            color: #666;
+        }
+
+        /* Predictions */
+        .prediction-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .prediction-game {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .prediction-date {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .prediction-discount {
+            font-size: 1.2em;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .confidence {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 6px;
+            background-color: var(--border);
+            border-radius: 3px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background-color: var(--primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--dark);
+        }
+
+        #modalTitle {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 60px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.8em;
+            }
+            .games-grid,
+            .predictions-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .games-grid,
+            .predictions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">🎮 Xbox Game Sale Predictor</h1>
+            <p class="tagline">Predict when Xbox games will go on sale</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Search Section -->
+        <section class="search-section">
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="search-input" 
+                placeholder="Search for Xbox games..."
+            >
+            <div id="searchResults" class="search-results"></div>
+        </section>
+
+        <!-- Games Grid -->
+        <section class="games-section">
+            <h2>Featured Games</h2>
+            <div id="gamesList" class="games-grid"></div>
+        </section>
+
+        <!-- Game Detail Modal -->
+        <div id="gameModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle"></h2>
+                <div id="modalBody"></div>
+            </div>
+        </div>
+
+        <!-- Upcoming Sales Section -->
+        <section class="predictions-section">
+            <h2>⭐ Predicted Sales (Next 30 Days)</h2>
+            <div id="predictionsList" class="predictions-grid"></div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Xbox Game Sale Predictor. Predict smarter, save more. 💰</p>
+    </footer>
+
+    <script>
+        // Mock Game Data
+        const mockGames = [
+            {
+                id: 1,
+                title: "Starfield",
+                emoji: "🚀",
+                currentPrice: 69.99,
+                originalPrice: 69.99,
+                genre: "RPG",
+                onSale: false,
+                discount: 0
+            },
+            {
+                id: 2,
+                title: "Forza Motorsport",
+                emoji: "🏎️",
+                currentPrice: 34.99,
+                originalPrice: 59.99,
+                genre: "Racing",
+                onSale: true,
+                discount: 42
+            },
+            {
+                id: 3,
+                title: "Halo Infinite",
+                emoji: "🎯",
+                currentPrice: 39.99,
+                originalPrice: 59.99,
+                genre: "FPS",
+                onSale: true,
+                discount: 33
+            },
+            {
+                id: 4,
+                title: "Baldur's Gate 3",
+                emoji: "⚔️",
+                currentPrice: 49.99,
+                originalPrice: 59.99,
+                genre: "RPG",
+                onSale: true,
+                discount: 17
+            },
+            {
+                id: 5,
+                title: "Minecraft",
+                emoji: "⛏️",
+                currentPrice: 19.99,
+                originalPrice: 19.99,
+                genre: "Sandbox",
+                onSale: false,
+                discount: 0
+            },
+            {
+                id: 6,
+                title: "Sea of Thieves",
+                emoji: "🏴‍☠️",
+                currentPrice: 24.99,
+                originalPrice: 39.99,
+                genre: "Adventure",
+                onSale: true,
+                discount: 37
+            }
+        ];
+
+        // Mock Predictions
+        const mockPredictions = [
+            {
+                gameId: 1,
+                title: "Starfield",
+                nextSaleDate: "June 15, 2026",
+                estimatedDiscount: 15,
+                confidence: 72
+            },
+            {
+                gameId: 3,
+                title: "Halo Infinite",
+                nextSaleDate: "June 20, 2026",
+                estimatedDiscount: 25,
+                confidence: 85
+            },
+            {
+                gameId: 4,
+                title: "Baldur's Gate 3",
+                nextSaleDate: "June 25, 2026",
+                estimatedDiscount: 20,
+                confidence: 68
+            }
+        ];
+
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const gamesList = document.getElementById('gamesList');
+        const predictionsList = document.getElementById('predictionsList');
+        const gameModal = document.getElementById('gameModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const closeBtn = document.querySelector('.close');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            displayGames(mockGames);
+            displayPredictions(mockPredictions);
+            setupEventListeners();
+        });
+
+        // Event Listeners
+        function setupEventListeners() {
+            searchInput.addEventListener('input', handleSearch);
+            searchInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    searchResults.classList.remove('active');
+                }, 200);
+            });
+            closeBtn.addEventListener('click', closeModal);
+            gameModal.addEventListener('click', (e) => {
+                if (e.target === gameModal) closeModal();
+            });
+        }
+
+        // Search Handler
+        function handleSearch(e) {
+            const query = e.target.value.toLowerCase();
+            
+            if (query.length === 0) {
+                searchResults.classList.remove('active');
+                return;
+            }
+
+            const filtered = mockGames.filter(game =>
+                game.title.toLowerCase().includes(query)
+            );
+
+            if (filtered.length === 0) {
+                searchResults.innerHTML = '<div style="padding: 12px 20px; color: #999;">No games found</div>';
+            } else {
+                searchResults.innerHTML = filtered.map(game => `
+                    <div class="search-result-item" onclick="openGameDetail(${game.id})">
+                        <strong>${game.title}</strong><br>
+                        <small>${game.genre} • $${game.currentPrice}</small>
+                    </div>
+                `).join('');
+            }
+
+            searchResults.classList.add('active');
+        }
+
+        // Display Games
+        function displayGames(games) {
+            gamesList.innerHTML = games.map(game => `
+                <div class="game-card" onclick="openGameDetail(${game.id})">
+                    <div class="game-card-image">${game.emoji}</div>
+                    <div class="game-card-content">
+                        <div class="game-title">${game.title}</div>
+                        <div class="game-info">${game.genre}</div>
+                        <div class="game-price">$${game.currentPrice}</div>
+                        <span class="game-discount ${game.onSale ? '' : 'no-sale'}">
+                            ${game.onSale ? `${game.discount}% OFF` : 'Full Price'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display Predictions
+        function displayPredictions(predictions) {
+            predictionsList.innerHTML = predictions.map(pred => `
+                <div class="prediction-card">
+                    <div class="prediction-game">${pred.title}</div>
+                    <div class="prediction-date">📅 ${pred.nextSaleDate}</div>
+                    <div class="prediction-discount">~${pred.estimatedDiscount}% off</div>
+                    <div class="confidence">
+                        Confidence: ${pred.confidence}%
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${pred.confidence}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Open Game Detail
+        function openGameDetail(gameId) {
+            const game = mockGames.find(g => g.id === gameId);
+            if (!game) return;
+
+            const prediction = mockPredictions.find(p => p.gameId === gameId);
+
+            modalTitle.textContent = `${game.emoji} ${game.title}`;
+            
+            let modalHTML = `
+                <div class="modal-section">
+                    <h3>Current Price</h3>
+                    <div style="font-size: 1.8em; color: #107c10; font-weight: 700;">
+                        $${game.currentPrice}
+                        ${game.onSale ? `<span style="color: #ffb900; font-size: 0.8em;"> (-${game.discount}%)</span>` : ''}
+                    </div>
+                    ${game.originalPrice !== game.currentPrice ? `<div style="color: #999; text-decoration: line-through;">Original: $${game.originalPrice}</div>` : ''}
+                </div>
+
+                <div class="modal-section">
+                    <h3>Game Details</h3>
+                    <p><strong>Genre:</strong> ${game.genre}</p>
+                    <p><strong>Status:</strong> ${game.onSale ? '✅ On Sale' : '⏳ Full Price'}</p>
+                </div>
+            `;
+
+            if (prediction) {
+                modalHTML += `
+                    <div class="modal-section">
+                        <h3>Sale Prediction</h3>
+                        <p><strong>Next Sale:</strong> ${prediction.nextSaleDate}</p>
+                        <p><strong>Estimated Discount:</strong> ~${prediction.estimatedDiscount}%</p>
+                        <p><strong>Confidence:</strong> ${prediction.confidence}%</p>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${prediction.confidence}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            modalHTML += `
+                <div class="modal-section">
+                    <h3>About</h3>
+                    <p>This is an Xbox game from the Game Pass and Xbox Store. Check back soon for price updates!</p>
+                </div>
+            `;
+
+            modalBody.innerHTML = modalHTML;
+            gameModal.classList.add('active');
+        }
+
+        // Close Modal
+        function closeModal() {
+            gameModal.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
