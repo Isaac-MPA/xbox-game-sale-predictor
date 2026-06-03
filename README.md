@@ -229,6 +229,39 @@ npm run dev
 
 Visit `http://localhost:3000` to see the application.
 
+## 🌐 Live Demo
+
+**[Play Here](https://xbox-game-sale-predictor.vercel.app)** *(Coming Soon - Add your Vercel URL here after deployment)*
+
+## 🚀 Vercel Deployment Setup
+
+### Quick Start (Recommended)
+1. **Go to [vercel.com](https://vercel.com)** and sign in
+2. Click "Add New..." → "Project"
+3. Import your GitHub repository (`Isaac-MPA/xbox-game-sale-predictor`)
+4. Click "Deploy"
+5. Once initial deployment completes, go to **Settings → Environment Variables**
+6. Add these variables:
+   ```
+   DATABASE_URL = your_postgresql_connection_string
+   JWT_SECRET = generate_a_random_secret_key
+   NEXT_PUBLIC_API_URL = https://your-vercel-domain.vercel.app/api
+   ```
+7. Redeploy from the Deployments tab
+8. Your site will be live at `https://your-project-name.vercel.app`
+
+### Environment Variables Setup
+
+For PostgreSQL, you can use:
+- **Render.com** (free tier available): Create PostgreSQL database and copy connection string
+- **Railway.app**: Similar free tier PostgreSQL hosting
+- **AWS RDS**: Production-grade option
+
+**To generate JWT_SECRET:**
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
 ## 📊 API Endpoints (To Be Implemented)
 
 ### Games
