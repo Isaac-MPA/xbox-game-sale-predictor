@@ -1,3 +1,8 @@
+<!-- 
+  Xbox Game Sale Predictor - Standalone HTML App
+  A simple web app to search Xbox games and predict when they'll go on sale
+  Everything is contained in this one file (HTML, CSS, JavaScript)
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,111 +10,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xbox Game Sale Predictor</title>
     <style>
+        /* ===== RESET & VARIABLES ===== */
+        /* Remove default margins and padding from all elements */
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box; /* Include padding/border in element width */
         }
 
+        /* Define color variables used throughout the app */
+        /* Xbox uses green (#107c10) as primary color */
         :root {
-            --primary: #107c10;
-            --secondary: #005a9e;
-            --accent: #ffb900;
-            --dark: #1e1e1e;
-            --light: #f3f3f3;
-            --border: #e5e5e5;
+            --primary: #107c10;      /* Xbox green */
+            --secondary: #005a9e;    /* Dark blue */
+            --accent: #ffb900;       /* Gold/yellow for highlights */
+            --dark: #1e1e1e;         /* Almost black text */
+            --light: #f3f3f3;        /* Light gray background */
+            --border: #e5e5e5;       /* Light gray for borders */
         }
 
+        /* ===== BODY & GENERAL LAYOUT ===== */
         body {
+            /* Use system fonts for best compatibility */
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
                 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
                 sans-serif;
             background-color: var(--light);
             color: var(--dark);
-            line-height: 1.6;
+            line-height: 1.6; /* Comfortable reading line height */
         }
 
+        /* Center content with max width */
         .container {
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+            margin: 0 auto; /* Center horizontally */
+            padding: 0 20px; /* Add horizontal padding on mobile */
         }
 
-        /* Header */
+        /* ===== HEADER STYLING ===== */
+        /* Top banner with gradient background */
         .header {
+            /* Use gradient from primary to secondary color */
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
             padding: 40px 0;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
         }
 
         .logo {
             font-size: 2.5em;
             margin-bottom: 10px;
-            font-weight: 700;
+            font-weight: 700; /* Bold text */
         }
 
         .tagline {
             font-size: 1.1em;
-            opacity: 0.95;
+            opacity: 0.95; /* Slightly transparent */
         }
 
-        /* Search Section */
+        /* ===== SEARCH SECTION ===== */
         .search-section {
             margin: 40px 0;
-            position: relative;
+            position: relative; /* For dropdown positioning */
         }
 
+        /* Search input styling */
         .search-input {
-            width: 100%;
-            padding: 15px 20px;
+            width: 100%; /* Full width */
+            padding: 15px 20px; /* Internal spacing */
             font-size: 1em;
             border: 2px solid var(--border);
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            border-radius: 8px; /* Rounded corners */
+            transition: all 0.3s ease; /* Smooth animations */
         }
 
+        /* Change border color when focused */
         .search-input:focus {
-            outline: none;
+            outline: none; /* Remove default outline */
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(16, 124, 16, 0.1);
+            box-shadow: 0 0 0 3px rgba(16, 124, 16, 0.1); /* Green glow */
         }
 
+        /* Dropdown for search results */
         .search-results {
-            position: absolute;
-            top: 100%;
+            position: absolute; /* Float above other content */
+            top: 100%; /* Position below search input */
             left: 0;
             right: 0;
             background: white;
             border: 1px solid var(--border);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
+            border-top: none; /* No top border (connects to input) */
+            border-radius: 0 0 8px 8px; /* Rounded bottom corners */
             max-height: 300px;
-            overflow-y: auto;
-            z-index: 10;
-            display: none;
+            overflow-y: auto; /* Scrollbar if needed */
+            z-index: 10; /* Above other elements */
+            display: none; /* Hidden by default */
         }
 
+        /* Show dropdown when it has 'active' class */
         .search-results.active {
             display: block;
         }
 
+        /* Individual search result item */
         .search-result-item {
             padding: 12px 20px;
             border-bottom: 1px solid var(--border);
-            cursor: pointer;
+            cursor: pointer; /* Show it's clickable */
             transition: background 0.2s ease;
         }
 
+        /* Highlight on hover */
         .search-result-item:hover {
             background-color: var(--light);
         }
 
-        /* Sections */
+        /* ===== SECTION HEADINGS ===== */
         .games-section,
         .predictions-section {
-            margin: 60px 0;
+            margin: 60px 0; /* Space between sections */
         }
 
         h2 {
@@ -118,38 +138,45 @@
             color: var(--primary);
         }
 
-        /* Games Grid */
+        /* ===== GRID LAYOUT ===== */
+        /* Responsive grid that adapts to screen size */
         .games-grid,
         .predictions-grid {
             display: grid;
+            /* Auto-fill columns, minimum 250px, maximum 1fr (equal space) */
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
+            gap: 20px; /* Space between items */
         }
 
+        /* ===== GAME CARD ===== */
+        /* Individual game card styling */
         .game-card {
             background: white;
             border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
+            overflow: hidden; /* Hide content that overflows rounded corners */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            transition: all 0.3s ease; /* Smooth animation on interaction */
+            cursor: pointer; /* Show it's clickable */
         }
 
+        /* Lift card slightly on hover */
         .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px); /* Move up 5 pixels */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Darker shadow */
         }
 
+        /* Top image section of card */
         .game-card-image {
             width: 100%;
             height: 150px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
+            display: flex; /* Center emoji vertically and horizontally */
             align-items: center;
             justify-content: center;
-            font-size: 3em;
+            font-size: 3em; /* Large emoji */
         }
 
+        /* Bottom content section of card */
         .game-card-content {
             padding: 20px;
         }
@@ -174,9 +201,10 @@
             margin-bottom: 10px;
         }
 
+        /* Badge showing discount or full price */
         .game-discount {
             display: inline-block;
-            background-color: var(--accent);
+            background-color: var(--accent); /* Gold background */
             color: var(--dark);
             padding: 4px 12px;
             border-radius: 4px;
@@ -184,12 +212,14 @@
             font-size: 0.9em;
         }
 
+        /* Style for games not on sale */
         .game-discount.no-sale {
             background-color: var(--border);
             color: #666;
         }
 
-        /* Predictions */
+        /* ===== PREDICTION CARDS ===== */
+        /* Card showing predicted upcoming sales */
         .prediction-card {
             background: white;
             border-radius: 8px;
@@ -217,12 +247,14 @@
             font-weight: 700;
         }
 
+        /* Confidence label and bar */
         .confidence {
             font-size: 0.85em;
             color: #999;
             margin-top: 8px;
         }
 
+        /* Visual progress bar for confidence score */
         .confidence-bar {
             width: 100%;
             height: 6px;
@@ -232,12 +264,14 @@
             overflow: hidden;
         }
 
+        /* Fills up based on confidence percentage */
         .confidence-fill {
             height: 100%;
             background-color: var(--primary);
         }
 
-        /* Modal */
+        /* ===== MODAL (POPUP) ===== */
+        /* Full-screen overlay modal */
         .modal {
             display: none;
             position: fixed;
@@ -264,6 +298,7 @@
             overflow-y: auto;
         }
 
+        /* Close button (X) styling */
         .close {
             color: #aaa;
             float: right;
@@ -319,7 +354,8 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- ===== HEADER SECTION ===== -->
+    <!-- Top banner with app title and tagline -->
     <header class="header">
         <div class="container">
             <h1 class="logo">🎮 Xbox Game Sale Predictor</h1>
@@ -327,9 +363,9 @@
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- ===== MAIN CONTENT SECTION ===== -->
     <main class="container">
-        <!-- Search Section -->
+        <!-- Search Section: Let users find games by name -->
         <section class="search-section">
             <input 
                 type="text" 
@@ -337,38 +373,45 @@
                 class="search-input" 
                 placeholder="Search for Xbox games..."
             >
+            <!-- Dropdown for search results appears below input -->
             <div id="searchResults" class="search-results"></div>
         </section>
 
-        <!-- Games Grid -->
+        <!-- Games Grid: Display all available games as cards -->
         <section class="games-section">
             <h2>Featured Games</h2>
+            <!-- Cards will be generated here by JavaScript -->
             <div id="gamesList" class="games-grid"></div>
         </section>
 
-        <!-- Game Detail Modal -->
+        <!-- Game Detail Modal (Popup): Shows detailed info when user clicks a game -->
         <div id="gameModal" class="modal">
             <div class="modal-content">
+                <!-- Close button (X) -->
                 <span class="close">&times;</span>
+                <!-- Title and content will be filled in by JavaScript -->
                 <h2 id="modalTitle"></h2>
                 <div id="modalBody"></div>
             </div>
         </div>
 
-        <!-- Upcoming Sales Section -->
+        <!-- Upcoming Sales Section: Show predicted sales for next 30 days -->
         <section class="predictions-section">
             <h2>⭐ Predicted Sales (Next 30 Days)</h2>
+            <!-- Prediction cards will be generated here by JavaScript -->
             <div id="predictionsList" class="predictions-grid"></div>
         </section>
     </main>
 
-    <!-- Footer -->
+    <!-- ===== FOOTER SECTION ===== -->
+    <!-- Bottom of page with copyright -->
     <footer class="footer">
         <p>&copy; 2026 Xbox Game Sale Predictor. Predict smarter, save more. 💰</p>
     </footer>
 
     <script>
-        // Mock Game Data
+        // ===== MOCK DATA (Sample games and predictions) =====
+        // This array contains fake game data. In a real app, this would come from a database.
         const mockGames = [
             {
                 id: 1,
@@ -432,7 +475,8 @@
             }
         ];
 
-        // Mock Predictions
+        // ===== PREDICTIONS DATA =====
+        // Predicted upcoming sales with confidence scores
         const mockPredictions = [
             {
                 gameId: 1,
@@ -457,7 +501,8 @@
             }
         ];
 
-        // DOM Elements
+        // ===== DOM ELEMENTS =====
+        // Get references to HTML elements that we'll manipulate with JavaScript
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
         const gamesList = document.getElementById('gamesList');
@@ -467,43 +512,57 @@
         const modalBody = document.getElementById('modalBody');
         const closeBtn = document.querySelector('.close');
 
-        // Initialize
+        // ===== INITIALIZATION =====
+        // Wait for page to fully load, then populate games and set up event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            displayGames(mockGames);
-            displayPredictions(mockPredictions);
-            setupEventListeners();
+            displayGames(mockGames);        // Render all games to page
+            displayPredictions(mockPredictions); // Render predictions
+            setupEventListeners();          // Attach click/input handlers
         });
 
-        // Event Listeners
+        // ===== EVENT LISTENERS =====
+        // Attach event handlers to interactive elements
         function setupEventListeners() {
+            // When user types in search box
             searchInput.addEventListener('input', handleSearch);
+            
+            // Hide search results when user clicks away
             searchInput.addEventListener('blur', () => {
                 setTimeout(() => {
                     searchResults.classList.remove('active');
                 }, 200);
             });
+            
+            // Close modal when X button is clicked
             closeBtn.addEventListener('click', closeModal);
+            
+            // Close modal when user clicks outside the modal box
             gameModal.addEventListener('click', (e) => {
                 if (e.target === gameModal) closeModal();
             });
         }
 
-        // Search Handler
+        // ===== SEARCH FUNCTIONALITY =====
+        // Filter games based on user input and show results
         function handleSearch(e) {
-            const query = e.target.value.toLowerCase();
+            const query = e.target.value.toLowerCase(); // Get search text, make lowercase
             
+            // Hide dropdown if search is empty
             if (query.length === 0) {
                 searchResults.classList.remove('active');
                 return;
             }
 
+            // Filter games that match the search query
             const filtered = mockGames.filter(game =>
                 game.title.toLowerCase().includes(query)
             );
 
+            // Show "no games found" message or list matching games
             if (filtered.length === 0) {
                 searchResults.innerHTML = '<div style="padding: 12px 20px; color: #999;">No games found</div>';
             } else {
+                // Create clickable list of matching games
                 searchResults.innerHTML = filtered.map(game => `
                     <div class="search-result-item" onclick="openGameDetail(${game.id})">
                         <strong>${game.title}</strong><br>
@@ -515,7 +574,8 @@
             searchResults.classList.add('active');
         }
 
-        // Display Games
+        // ===== DISPLAY GAMES =====
+        // Render game cards to the page
         function displayGames(games) {
             gamesList.innerHTML = games.map(game => `
                 <div class="game-card" onclick="openGameDetail(${game.id})">
@@ -532,7 +592,8 @@
             `).join('');
         }
 
-        // Display Predictions
+        // ===== DISPLAY PREDICTIONS =====
+        // Render sale prediction cards to the page
         function displayPredictions(predictions) {
             predictionsList.innerHTML = predictions.map(pred => `
                 <div class="prediction-card">
@@ -549,15 +610,20 @@
             `).join('');
         }
 
-        // Open Game Detail
+        // ===== GAME DETAIL MODAL =====
+        // Show detailed information about a specific game in a popup
         function openGameDetail(gameId) {
+            // Find the game with this ID
             const game = mockGames.find(g => g.id === gameId);
-            if (!game) return;
+            if (!game) return; // Stop if game not found
 
+            // Look for prediction data for this game
             const prediction = mockPredictions.find(p => p.gameId === gameId);
 
+            // Set modal title with emoji and game name
             modalTitle.textContent = `${game.emoji} ${game.title}`;
             
+            // Build HTML content for the modal
             let modalHTML = `
                 <div class="modal-section">
                     <h3>Current Price</h3>
@@ -575,6 +641,7 @@
                 </div>
             `;
 
+            // If we have prediction data, add it to the modal
             if (prediction) {
                 modalHTML += `
                     <div class="modal-section">
@@ -589,6 +656,7 @@
                 `;
             }
 
+            // Add footer info
             modalHTML += `
                 <div class="modal-section">
                     <h3>About</h3>
@@ -596,13 +664,15 @@
                 </div>
             `;
 
+            // Insert HTML and show modal
             modalBody.innerHTML = modalHTML;
-            gameModal.classList.add('active');
+            gameModal.classList.add('active'); // Show by adding 'active' class
         }
 
-        // Close Modal
+        // ===== CLOSE MODAL =====
+        // Hide the modal popup
         function closeModal() {
-            gameModal.classList.remove('active');
+            gameModal.classList.remove('active'); // Hide by removing 'active' class
         }
     </script>
 </body>
